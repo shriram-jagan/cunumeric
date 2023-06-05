@@ -41,6 +41,7 @@ Numerical ranges
 
    arange
    linspace
+   logspace
 
 
 Building matrices

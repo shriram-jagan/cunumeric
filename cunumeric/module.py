@@ -34,7 +34,7 @@ from cunumeric.coverage import is_implemented
 
 from ._ufunc.comparison import maximum, minimum
 from ._ufunc.floating import floor
-from ._ufunc.math import add, multiply
+from ._ufunc.math import add, multiply, power
 from .array import add_boilerplate, convert_to_cunumeric_ndarray, ndarray
 from .config import BinaryOpCode, ScanCode, UnaryRedCode
 from .runtime import runtime
@@ -823,6 +823,75 @@ def linspace(
         return y.astype(dtype, copy=False), step
     else:
         return y.astype(dtype, copy=False)
+
+
+@add_boilerplate("start", "stop")
+def logspace(
+    start: ndarray,
+    stop: ndarray,
+    num: int = 50,
+    endpoint: bool = True,
+    base: Union[float, ndarray] = 10.0,
+    dtype: Optional[npt.DTypeLike] = None,
+    axis: int = 0,
+) -> ndarray:
+    """
+
+    Returns numbers spaced evenly on a logscale
+
+    In linear space, the sequence starts at `base ** start`
+    (base to the power of start) and ends with `base ** stop`
+    (see endpoint below).
+
+    Parameters
+    ----------
+    start : array_like
+        `base ** start` is the starting value of the sequence.
+    stop : array_like
+        `base ** stop` is the final value of the sequence,
+        unless endpoint is False. In that case, num + 1 values
+        are spaced over the interval in log-space, of which all
+        but the last (a sequence of length num) are returned.
+    num : int, optional
+        Number of samples to generate. Default is 50. Must be non-negative.
+    endpoint : bool, optional
+        If True, `stop` is the last sample. Otherwise, it is not included.
+        Default is True.
+    base: array_like, optional
+        The base of the log space. The step size between the elements in
+        `ln (samples) / ln(base)` (or `log_base(samples)`) is uniform.
+        Default is 10.0
+    dtype : data-type, optional
+        The type of the output array.  If `dtype` is not given, infer the data
+        type from `start` and `stop`. The inferred type will never be an
+        integer; float is chosen even if the arguments would produce an
+        array of integers.
+    axis : int, optional
+        The axis in the result to store the samples.  Relevant only if start
+        or stop are array-like.  By default (0), the samples will be along a
+        new axis inserted at the beginning. Use -1 to get an axis at the end.
+
+    Returns
+    -------
+    samples : ndarray
+        There are `num` equally spaced samples in the closed interval
+        ``[start, stop]`` or the half-open interval ``[start, stop)``
+        (depending on whether `endpoint` is True or False).
+
+    See Also
+    --------
+    numpy.linspace
+
+    Availability
+    --------
+    Multiple GPUs, Multiple CPUs
+    """
+
+    linear_array = linspace(start, stop, num=num, endpoint=endpoint, axis=axis)
+    if dtype is None:
+        return power(base, linear_array)
+
+    return power(base, linear_array).astype(dtype, copy=False)
 
 
 # Building matrices
