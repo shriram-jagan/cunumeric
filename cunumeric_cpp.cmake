@@ -151,6 +151,7 @@ list(APPEND cunumeric_SOURCES
   src/cunumeric/matrix/dot.cc
   src/cunumeric/matrix/potrf.cc
   src/cunumeric/matrix/solve.cc
+  #src/cunumeric/matrix/solve_tridiagonal.cc
   src/cunumeric/matrix/syrk.cc
   src/cunumeric/matrix/tile.cc
   src/cunumeric/matrix/transpose.cc
@@ -253,6 +254,7 @@ if(Legion_USE_CUDA)
     src/cunumeric/matrix/dot.cu
     src/cunumeric/matrix/potrf.cu
     src/cunumeric/matrix/solve.cu
+    #src/cunumeric/matrix/solve_tridiagonal.cu
     src/cunumeric/matrix/syrk.cu
     src/cunumeric/matrix/tile.cu
     src/cunumeric/matrix/transpose.cu
@@ -389,6 +391,7 @@ target_link_libraries(cunumeric
           $<TARGET_NAME_IF_EXISTS:CUDA::cufft>
           $<TARGET_NAME_IF_EXISTS:CUDA::cublas>
           $<TARGET_NAME_IF_EXISTS:CUDA::cusolver>
+          $<TARGET_NAME_IF_EXISTS:CUDA::cusparse>
           $<TARGET_NAME_IF_EXISTS:OpenMP::OpenMP_CXX>
           $<TARGET_NAME_IF_EXISTS:cutensor::cutensor>)
 

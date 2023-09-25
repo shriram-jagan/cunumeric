@@ -89,6 +89,25 @@ def cholesky(a: ndarray) -> ndarray:
     return _cholesky(a)
 
 
+@add_boilerplate("dl", "d", "du", "B")
+def solve_tridiagonal(dl, d, du, B):
+    """
+    Solve a tridiagonal system of equations using cuSparse's API.
+
+    Parameters:
+    -----------
+
+    Returns:
+    --------
+    solution: np.ndarray
+        Solution to the linear system of equations A x = b where
+        the lower, main, and upper diagonal elements of the matrix
+        are provided
+    """
+
+    return _solve_tridiagonal(dl, d, du, B)
+
+
 @add_boilerplate("a", "b")
 def solve(a: ndarray, b: ndarray, out: Optional[ndarray] = None) -> ndarray:
     """
@@ -633,6 +652,12 @@ def _cholesky(a: ndarray, no_tril: bool = False) -> ndarray:
     )
     output._thunk.cholesky(input._thunk, no_tril=no_tril)
     return output
+
+
+def _solve_tridiagonal(
+    dl: ndarray, d: ndarray, du: ndarray, B: ndarray
+) -> ndarray:
+    return ndarray(shape=(1,), dtype=np.float)
 
 
 def _solve(

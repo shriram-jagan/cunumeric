@@ -254,6 +254,7 @@ void CUDALibraries::finalize()
   if (finalized_) return;
   if (cublas_ != nullptr) finalize_cublas();
   if (cusolver_ != nullptr) finalize_cusolver();
+  if (cusparse_ != nullptr) finalize_cusparse();
   if (cutensor_ != nullptr) finalize_cutensor();
   for (auto& pair : plan_caches_) delete pair.second;
   finalized_ = true;
@@ -269,6 +270,12 @@ void CUDALibraries::finalize_cusolver()
 {
   CHECK_CUSOLVER(cusolverDnDestroy(cusolver_));
   cusolver_ = nullptr;
+}
+
+void CUDALibraries::finalize_cusparse()
+{
+  CHECK_CUSPARSE(cusparseDestroy(cusparse_));
+  cusparse_ = nullptr;
 }
 
 void CUDALibraries::finalize_cutensor()
@@ -296,6 +303,12 @@ cusolverDnHandle_t CUDALibraries::get_cusolver()
 {
   if (nullptr == cusolver_) CHECK_CUSOLVER(cusolverDnCreate(&cusolver_));
   return cusolver_;
+}
+
+cusparseHandle_t CUDALibraries::get_cusparse()
+{
+  if (nullptr == cusparse_) CHECK_CUSPARSE(cusparseCreate(&cusparse_));
+  return cusparse_;
 }
 
 cutensorHandle_t* CUDALibraries::get_cutensor()
@@ -344,6 +357,13 @@ cublasContext* get_cublas()
   return lib.get_cublas();
 }
 
+cusparseHandle_t get_cusparse()
+{
+  const auto proc = legate::Processor::get_executing_processor();
+  auto& lib       = get_cuda_libraries(proc);
+  return lib.get_cusparse();
+}
+
 cusolverDnContext* get_cusolver()
 {
   const auto proc = legate::Processor::get_executing_processor();
@@ -376,6 +396,7 @@ class LoadCUDALibsTask : public CuNumericTask<LoadCUDALibsTask> {
     auto& lib       = get_cuda_libraries(proc);
     lib.get_cublas();
     lib.get_cusolver();
+    lib.get_cusparse();
     lib.get_cutensor();
   }
 };

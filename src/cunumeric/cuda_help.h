@@ -27,6 +27,7 @@
 #include <cufft.h>
 #include <cufftXt.h>
 #include <cutensor.h>
+#include <cusparse.h>
 #include <nccl.h>
 
 #define THREADS_PER_BLOCK 128
@@ -57,6 +58,12 @@
   do {                                              \
     cutensorStatus_t __result__ = (expr);           \
     check_cutensor(__result__, __FILE__, __LINE__); \
+  } while (false)
+
+#define CHECK_CUSPARSE(expr)                   \
+  do {                                         \
+    cusparseStatus_t result = (expr);          \
+    checkCuSparse(result, __FILE__, __LINE__); \
   } while (false)
 
 #define CHECK_NCCL(expr)                    \
@@ -204,6 +211,19 @@ __host__ inline void check_cutensor(cutensorStatus_t result, const char* file, i
 #else
     exit(result);
 #endif
+  }
+}
+
+__host__ inline void checkCuSparse(cusparseStatus_t status, const char* file, int line)
+{
+  if (status != CUSPARSE_STATUS_SUCCESS) {
+    fprintf(stderr,
+            "Internal CUSPARSE failure with error code %d (%s) in file %s at line %d\n",
+            status,
+            cusparseGetErrorString(status),
+            file,
+            line);
+    assert(false);
   }
 }
 

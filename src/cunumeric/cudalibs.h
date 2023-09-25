@@ -36,12 +36,14 @@ struct CUDALibraries {
   void finalize();
   cublasHandle_t get_cublas();
   cusolverDnHandle_t get_cusolver();
+  cusparseHandle_t get_cusparse();
   cutensorHandle_t* get_cutensor();
   cufftContext get_cufft_plan(cufftType type, const cufftPlanParams& params);
 
  private:
   void finalize_cublas();
   void finalize_cusolver();
+  void finalize_cusparse();
   void finalize_cutensor();
 
  private:
@@ -49,6 +51,7 @@ struct CUDALibraries {
   cublasContext* cublas_;
   cusolverDnContext* cusolver_;
   cutensorHandle_t* cutensor_;
+  cusparseHandle_t cusparse_;
   std::map<cufftType, cufftPlanCache*> plan_caches_;
 };
 
