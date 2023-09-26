@@ -254,7 +254,7 @@ if(Legion_USE_CUDA)
     src/cunumeric/matrix/dot.cu
     src/cunumeric/matrix/potrf.cu
     src/cunumeric/matrix/solve.cu
-    #src/cunumeric/matrix/solve_tridiagonal.cu
+    src/cunumeric/matrix/solve_tridiagonal.cu
     src/cunumeric/matrix/syrk.cu
     src/cunumeric/matrix/tile.cu
     src/cunumeric/matrix/transpose.cu
