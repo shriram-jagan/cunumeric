@@ -41,7 +41,22 @@ static inline void solve_new_template(Getgtsv2BufferSize gtsv2_buffer_size,
   size_t buffer_size;
 
   CHECK_CUSPARSE(gtsv2_buffer_size(handle, m, n, dl, d, du, B, ldb, &buffer_size));
-  CHECK_CUSPARSE(gtsv2solver(handle, m, n, dl, d, du, B, ldb, reinterpret_cast<void *>(&buffer_size)));
+
+#if DEBUG_CUNUMERIC
+  assert(buffer_size % 128 == 0);
+#endif
+
+  // std::cout << "buffer size is: " << buffer_size << std::endl;
+  // std::cout <<"m, n, ldb: " << m << " " << n << " " << ldb << std::endl;
+
+  // Allocate the buffer
+  void* buffer = nullptr;
+  if (buffer_size > 0) {
+    Legion::DeferredBuffer<char, 1> buf({0, buffer_size - 1}, Memory::GPU_FB_MEM);
+    buffer = (void *) buf.ptr(0);
+  } 
+  
+  CHECK_CUSPARSE(gtsv2solver(handle, m, n, dl, d, du, B, ldb, reinterpret_cast<void *>(buffer)));
   CHECK_CUDA(cudaStreamSynchronize(stream));
 
 }

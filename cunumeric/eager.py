@@ -1641,6 +1641,13 @@ class EagerArray(NumPyThunk):
                 raise LinAlgError(e) from e
             self.array[:] = result
 
+    def solve_tridiagonal(self, dl: Any, d: Any, du: Any, B: Any) -> None:
+        self.check_eager_args(dl, d, du, B)
+        if self.deferred is not None:
+            self.deferred.solve_tridiagonal(dl, d, du, B)
+        else:
+            print("Tridiagonal solver for eager mode is not implemented.")
+
     def scan(
         self,
         op: int,

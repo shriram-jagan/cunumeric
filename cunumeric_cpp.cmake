@@ -151,7 +151,7 @@ list(APPEND cunumeric_SOURCES
   src/cunumeric/matrix/dot.cc
   src/cunumeric/matrix/potrf.cc
   src/cunumeric/matrix/solve.cc
-  #src/cunumeric/matrix/solve_tridiagonal.cc
+  src/cunumeric/matrix/solve_tridiagonal.cc
   src/cunumeric/matrix/syrk.cc
   src/cunumeric/matrix/tile.cc
   src/cunumeric/matrix/transpose.cc

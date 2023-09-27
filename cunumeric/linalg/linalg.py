@@ -90,7 +90,7 @@ def cholesky(a: ndarray) -> ndarray:
 
 
 @add_boilerplate("dl", "d", "du", "B")
-def solve_tridiagonal(dl, d, du, B):
+def solve_tridiagonal(dl:ndarray, d:ndarray, du:ndarray, B:ndarray, ldb:int = 1):
     """
     Solve a tridiagonal system of equations using cuSparse's API.
 
@@ -105,7 +105,7 @@ def solve_tridiagonal(dl, d, du, B):
         are provided
     """
 
-    return _solve_tridiagonal(dl, d, du, B)
+    return _solve_tridiagonal(dl, d, du, B, ldb)
 
 
 @add_boilerplate("a", "b")
@@ -654,12 +654,6 @@ def _cholesky(a: ndarray, no_tril: bool = False) -> ndarray:
     return output
 
 
-def _solve_tridiagonal(
-    dl: ndarray, d: ndarray, du: ndarray, B: ndarray
-) -> ndarray:
-    return ndarray(shape=(1,), dtype=np.float)
-
-
 def _solve(
     a: ndarray, b: ndarray, output: Optional[ndarray] = None
 ) -> ndarray:
@@ -695,3 +689,13 @@ def _solve(
         )
     out._thunk.solve(a._thunk, b._thunk)
     return out
+
+
+def _solve_tridiagonal(dl: ndarray, d: ndarray, du: ndarray, B: ndarray, ldb: int) -> ndarray:
+    #TODO: B is overwritten, do we need out?
+    out = ndarray(shape=B.shape, dtype=B.dtype, inputs=(dl, d, du, B),)
+    out._thunk.solve_tridiagonal(dl._thunk, d._thunk, du._thunk, B._thunk, ldb)
+
+    return out
+
+

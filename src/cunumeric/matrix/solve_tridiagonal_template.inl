@@ -48,32 +48,29 @@ struct SolveTridiagonalImpl  {
     {
       using VAL = legate_type_of<CODE>;
 
-      const auto dl_shape = dl_array.shape<2>();
-      const auto d_shape  = d_array.shape<2>();
-      const auto du_shape = du_array.shape<2>();
-      const auto b_shape  = B_array.shape<2>();
+      const auto dl_shape = dl_array.shape<1>();
+      const auto d_shape  = d_array.shape<1>();
+      const auto du_shape = du_array.shape<1>();
+      const auto b_shape  = B_array.shape<1>();
 
       // SJ TODO: Make sure ldb is max(1, m)
-      // SJ TODO: Let's make B two dimensional, so make sure to reflect this in python
+      // SJ TODO: Let's assume B is of shape (n, 1)
 
       int m = d_shape.hi[0] - d_shape.lo[0] + 1;
-      int n = b_shape.hi[0] - b_shape.lo[0] + 1;
+      int n = 1;
+
+      /// int n = b_shape.hi[0] - b_shape.lo[0] + 1; // this is wrong; n is col
       // SJ TODO: This needs to be updated; n reflects the number of columns in B 
       
-      size_t dl_strides[2], d_strides[2], du_strides[2], b_strides[2];
+      size_t dl_strides[1], d_strides[1], du_strides[1], b_strides[1];
       // dl_array.read_accessor<>() would give const VAL *dl; const correctness needs to be 
       // maintained
-      VAL *dl = dl_array.read_write_accessor<VAL, 2>(dl_shape).ptr(dl_shape, dl_strides);
-      VAL *d  =  d_array.read_write_accessor<VAL, 2>(d_shape).ptr(d_shape  , d_strides);
-      VAL *du = du_array.read_write_accessor<VAL, 2>(du_shape).ptr(du_shape, du_strides);
+      VAL *dl = dl_array.read_write_accessor<VAL, 1>(dl_shape).ptr(dl_shape, dl_strides);
+      VAL *d  =  d_array.read_write_accessor<VAL, 1>(d_shape).ptr(d_shape  , d_strides);
+      VAL *du = du_array.read_write_accessor<VAL, 1>(du_shape).ptr(du_shape, du_strides);
 
-      // this should change if B_array.dim() == 1
-      // cout B_array.dim()
-      VAL* b = B_array.read_write_accessor<VAL, 2>(b_shape).ptr(b_shape, b_strides);
-
-#ifdef DEBUG_CUNUMERIC
-    assert(m > 0 && n > 0 && ldb > 0);
-#endif
+      // SJ TODO: this should change if B_array.dim() == 1
+      VAL* b = B_array.read_write_accessor<VAL, 1>(b_shape).ptr(b_shape, b_strides);
 
       SolveTridiagonalImplBody<KIND, CODE>{}(m, n, dl, d, du, b, ldb);
     }
@@ -88,11 +85,11 @@ struct SolveTridiagonalImpl  {
 template <VariantKind KIND>
 static void solve_tridiagonal_template(TaskContext &context)
 {
-  auto& dl = context.inputs()[0];
-  auto& d  = context.inputs()[1];
-  auto& du = context.inputs()[2];
-  auto& B  = context.inputs()[3];
-  int ldb = context.scalars()[0].value<int>();
+  auto& dl = context.outputs()[0];
+  auto& d  = context.outputs()[1];
+  auto& du = context.outputs()[2];
+  auto& B  = context.outputs()[3];
+  int ldb  = context.scalars()[0].value<int>();
 
   type_dispatch(d.code(), SolveTridiagonalImpl<KIND>{}, dl, d, du, B, ldb);
 }
