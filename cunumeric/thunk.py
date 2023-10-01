@@ -703,7 +703,7 @@ class NumPyThunk(ABC):
         ...
 
     @abstractmethod
-    def solve_tridiagonal(self, dl: Any, d: Any, du: Any, B: Any, ldb: int) -> NumPyThunk:
+    def solve_batched_tridiagonal(self, dl: Any, d: Any, du: Any, B: Any, ldb: int) -> NumPyThunk:
         ...
 
     @abstractmethod

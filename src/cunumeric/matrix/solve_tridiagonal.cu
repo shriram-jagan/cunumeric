@@ -24,15 +24,15 @@ namespace cunumeric {
 using namespace legate;
 
 template <typename Getgtsv2BufferSize, typename Getgtsv2Solver, typename VAL>
-static inline void solve_new_template(Getgtsv2BufferSize gtsv2_buffer_size, 
+static inline void solve_batched_tridiagonal_template(Getgtsv2BufferSize gtsv2_buffer_size, 
                                   Getgtsv2Solver gtsv2solver,
-                                  int32_t m,
-                                  int32_t n,
+                                  int32_t linear_system_size,
                                   VAL *dl,
                                   VAL *d,
                                   VAL *du, 
-                                  VAL *B,
-                                  int32_t ldb)
+                                  VAL *x,
+                                  int32_t batch_count,
+                                  int32_t batch_stride)
 {
   auto handle = get_cusparse(); 
   auto stream = get_cached_stream();
@@ -40,14 +40,13 @@ static inline void solve_new_template(Getgtsv2BufferSize gtsv2_buffer_size,
 
   size_t buffer_size;
 
-  CHECK_CUSPARSE(gtsv2_buffer_size(handle, m, n, dl, d, du, B, ldb, &buffer_size));
+  CHECK_CUSPARSE(gtsv2_buffer_size(handle, linear_system_size, dl, d, du, x, batch_count, batch_stride, &buffer_size));
 
 #if DEBUG_CUNUMERIC
   assert(buffer_size % 128 == 0);
+  std::cout << "buffer size is: " << buffer_size << std::endl;
+  std::cout <<"size, count, stride: " << linear_system_size << " " << batch_count << " " << batch_stride << std::endl;
 #endif
-
-  // std::cout << "buffer size is: " << buffer_size << std::endl;
-  // std::cout <<"m, n, ldb: " << m << " " << n << " " << ldb << std::endl;
 
   // Allocate the buffer
   void* buffer = nullptr;
@@ -56,40 +55,40 @@ static inline void solve_new_template(Getgtsv2BufferSize gtsv2_buffer_size,
     buffer = (void *) buf.ptr(0);
   } 
   
-  CHECK_CUSPARSE(gtsv2solver(handle, m, n, dl, d, du, B, ldb, reinterpret_cast<void *>(buffer)));
+  CHECK_CUSPARSE(gtsv2solver(handle, linear_system_size, dl, d, du, x, batch_count, batch_stride, reinterpret_cast<void *>(buffer)));
   CHECK_CUDA(cudaStreamSynchronize(stream));
 
 }
 
 template<>
 struct SolveTridiagonalImplBody<VariantKind::GPU, Type::Code::FLOAT32> {
-  void operator()(int32_t m, int32_t n, float* dl, float* d, float* du, float* B, int32_t ldb)
+  void operator()(int32_t linear_system_size, float* dl, float* d, float* du, float* x, int32_t batch_count, int32_t batch_stride)
   {
-    solve_new_template(cusparseSgtsv2_bufferSizeExt,
-                       cusparseSgtsv2,
-                       m, 
-                       n, 
+    solve_batched_tridiagonal_template(cusparseSgtsv2StridedBatch_bufferSizeExt,
+                       cusparseSgtsv2StridedBatch,
+                       linear_system_size,
                        dl, 
                        d, 
                        du, 
-                       B, 
-                       ldb);
+                       x, 
+                       batch_count,
+                       batch_stride);
   }
 };
 
 template<>
 struct SolveTridiagonalImplBody<VariantKind::GPU, Type::Code::FLOAT64> {
-  void operator()(int32_t m, int32_t n, double* dl, double* d, double* du, double* B, int32_t ldb)
+  void operator()(int32_t linear_system_size, double* dl, double* d, double* du, double* x, int32_t batch_count, int32_t batch_stride)
   {
-    solve_new_template(cusparseDgtsv2_bufferSizeExt,
-                       cusparseDgtsv2,
-                       m, 
-                       n, 
+    solve_batched_tridiagonal_template(cusparseDgtsv2StridedBatch_bufferSizeExt,
+                       cusparseDgtsv2StridedBatch,
+                       linear_system_size, 
                        dl, 
                        d, 
                        du, 
-                       B, 
-                       ldb);
+                       x, 
+                       batch_count,
+                       batch_stride);
   }
 };
 
@@ -97,34 +96,34 @@ struct SolveTridiagonalImplBody<VariantKind::GPU, Type::Code::FLOAT64> {
 
 template<>
 struct SolveTridiagonalImplBody<VariantKind::GPU, Type::Code::COMPLEX64> {
-  void operator()(int32_t m, int32_t n, complex<float>* dl, complex<float>* d, complex<float>* du, complex<float>* B, int32_t ldb)
+  void operator()(int32_t linear_system_size, complex<float>* dl, complex<float>* d, complex<float>* du, complex<float>* x, int32_t batch_count, int32_t batch_stride)
   {
-    solve_new_template(cusparseCgtsv2_bufferSizeExt,
+    solve_batched_tridiagonal_template(cusparseCgtsv2_bufferSizeExt,
                        cusparseCgtsv2,
-                       m, 
-                       n, 
+                       linear_system_size, 
                        reinterpret_cast<cuComplex*>(dl),
                        reinterpret_cast<cuComplex*>(d),
                        reinterpret_cast<cuComplex*>(du),
-                       reinterpret_cast<cuComplex*>(B),
-                       ldb);
+                       reinterpret_cast<cuComplex*>(x),
+                       batch_count,
+                       batch_stride);
 
   }
 };
 
 template<>
 struct SolveTridiagonalImplBody<VariantKind::GPU, Type::Code::COMPLEX128> {
-  void operator()(int32_t m, int32_t n, complex<double>* dl, complex<double>* d, complex<double>* du, complex<double>* B, int32_t ldb)
+  void operator()(int32_t linear_system_size, complex<double>* dl, complex<double>* d, complex<double>* du, complex<double>* x, int32_t batch_count, int32_t batch_stride)
   {
-    solve_new_template(cusparseZgtsv2_bufferSizeExt,
+    solve_batched_tridiagonal_template(cusparseZgtsv2_bufferSizeExt,
                        cusparseZgtsv2,
-                       m, 
-                       n, 
+                       linear_system_size, 
                        reinterpret_cast<cuDoubleComplex*>(dl),
                        reinterpret_cast<cuDoubleComplex*>(d),
                        reinterpret_cast<cuDoubleComplex*>(du),
-                       reinterpret_cast<cuDoubleComplex*>(B),
-                       ldb);
+                       reinterpret_cast<cuDoubleComplex*>(x),
+                       batch_count,
+                       batch_stride);
   }
 };
 

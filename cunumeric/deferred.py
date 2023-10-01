@@ -3379,26 +3379,27 @@ class DeferredArray(NumPyThunk):
     def solve(self, a: Any, b: Any) -> None:
         solve(self, a, b)
 
-    @auto_convert("dl", "d", "du", "B")
-    def solve_tridiagonal(self, dl: Any, d: Any, du: Any, B: Any, ldb: int = 1) -> None:
+    @auto_convert("dl", "d", "du", "x")
+    def solve_batched_tridiagonal(self, dl: Any, d: Any, du: Any, x: Any, batch_count: int, batch_stride: int) -> None:
 
         task = self.context.create_auto_task(CuNumericOpCode.SOLVE_TRIDIAGONAL)
         task.add_input(dl.base)
         task.add_input(d.base)
         task.add_input(du.base)
-        task.add_input(B.base)
+        task.add_input(x.base)
 
         task.add_output(dl.base)
         task.add_output(d.base)
         task.add_output(du.base)
-        task.add_output(B.base)
+        task.add_output(x.base)
 
-        task.add_scalar_arg(ldb, ty.int32)
+        task.add_scalar_arg(batch_count, ty.int32)
+        task.add_scalar_arg(batch_stride, ty.int32)
 
         task.add_broadcast(dl.base)
         task.add_broadcast(d.base)
         task.add_broadcast(du.base)
-        task.add_broadcast(B.base)
+        task.add_broadcast(x.base)
 
         task.execute()
 
